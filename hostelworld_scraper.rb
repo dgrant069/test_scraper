@@ -1,11 +1,11 @@
 # ruby hostelworld_scraper.rb "http://www.hostelworld.com/hostels"
-require "nokogiri"
 require "pry"
+require "nokogiri"
 require "mechanize"
 
 url = ARGV[0]
 fp = File.new("hostelworld_scraper.txt", "w")
-counties_fp = File.new("hostelworld_countries.txt", "w")
+counties_fp = File.new("hostelworld_countries.csv", "w")
 states_fp = File.new("hostelworld_states.txt", "w")
 cities_fp = File.new("hostelworld_cities.txt", "w")
 hostels_fp = File.new("hostelworld_hostels.txt", "w")
@@ -20,23 +20,17 @@ html_doc = Nokogiri::HTML(html)
 # hostels = {}
 # hostel_info = {}
 
-
+# COUNTRIES
 countries_XML = agent.page.search(".topratedlist a")
 countries_name = countries_XML.map(&:text).map(&:strip)
 countries_urls = countries_XML.map{ |a| a['href'] }.compact.uniq
 countries = Hash[countries_name.zip countries_urls]
 
-  counties_fp.write("Countries\n\n")
   countries.each do |country, url|
     counties_fp.write(country + ", " + url + "\n")
-
-    # agent.page.link_with(:text => "#{countries}").click
-    # country.gsub!(" ", "-")
-    # hrefs = country.map{ |a|
-    #   a['href'] if a['href'].match("/hostelworld/")
-    # }.compact.uniq
   end
 
+# STATES
 agent.page.link_with(:text => "USA").click
   states_XML = agent.page.search("#states a")
   states_name = states_XML.map(&:text).map(&:strip)
@@ -44,9 +38,12 @@ agent.page.link_with(:text => "USA").click
   states = Hash[states_name.zip states_urls]
 
   states_fp.write("\nStates\n\n")
-  states_fp.write(states_name)
+  states.each do |state, url|
+    states_fp.write(state + ", " + url + "\n")
+  end
 
 
+# CITIES
 agent.page.link_with(:text => "Washington").click
   cities_XML = agent.page.search("#bottomlist a")
   cities_name = cities_XML.map(&:text).map(&:strip)
@@ -54,42 +51,102 @@ agent.page.link_with(:text => "Washington").click
   cities = Hash[cities_name.zip cities_urls]
 
   cities_fp.write("\nCities\n\n")
-  cities_fp.write(cities_name)
+  cities.each do |city, url|
+    cities_fp.write(city + ", " + url + "\n")
+  end
 
 
+# HOSTELS LIST
 agent.page.link_with(:text => "Seattle").click
   hostels_XML = agent.page.search("h2 .gotoMicrosite")
   hostels_name = hostels_XML.map(&:text).map(&:strip)
   hostels_urls = hostels_XML.map{ |a| a['href'] }.compact.uniq
-  hostels_address_XML = agent.page.search(".fabdetailsaddress")
-  hostels_address = hostels_address_XML.map(&:text).map(&:strip)
-  # hostels_dorm_prices_XML = agent.page.search("li .fabprice")
-  # hostels_dorm_prices = hostels_dorm_prices_XML.map(&:text).map(&:strip)
-  hostels_privates_prices_XML = agent.page.search(".fabpricespacer~ li .fabprice")
-  hostels_privates_prices = hostels_privates_prices_XML.map(&:text).map(&:strip)
   hostels = Hash[hostels_name.zip hostels_urls]
 
   hostels_fp.write("\nHostels\n\n")
-  hostels_fp.write(hostels_name)
+  hostels.each do |hostel, url|
+    hostels_fp.write(hostel + ", " + url + "\n")
+  end
 
 
-#
+# INDIVIDUAL HOSTEL INFO
 agent.page.link_with(:text => "HotelHotel Hostel").click
   hostel_amenities_XML = agent.page.search(".facilitylist li")
   hostel_amenities = hostel_amenities_XML.map(&:text).map(&:strip)
+  hostel_address_XML = agent.page.search(".address")
+  hostel_address = hostel_address_XML.map(&:text).map(&:strip)
+  full_address = []
   room_types = []
   room_prices = []
+  rating = 0
+  individual_ratings_categories = ["Value", "Safety", "Location", "Staff", "Atmosphere", "Cleanliness", "Facilities"]
+  individual_ratings = []
+  num_reviews = 0
+  description = ""
+  additional_notes = ""
+
+  # Get the rating
+  agent.page.link_with(:text => "Reviews").click
+    rating_XML = agent.page.search("h3")
+    rating = rating_XML.map(&:text).map(&:strip)[0].to_i
+
+    num_reviews_XML = agent.page.search(".numreviews")
+    num_reviews = num_reviews_XML.map(&:text).map(&:strip)[0].to_i
+
+    individual_rating_helper_XML = agent.page.search(".microratingpanel li")
+    individual_rating_helper = individual_rating_helper_XML.children.children.map(&:text).map(&:strip)
+    individual_rating_helper.each do |rated|
+      ind_rating = rated.to_i
+      individual_ratings.push(ind_rating)
+    end
+  agent.back()
+
+  # Get the address
+  hostel_address.each do |address|
+    bad_format_address = address.to_s
+    bad_format_address.gsub!(/(?<=^|\[)\s+|\s+(?=$|\])|(?<=\s)\s+/, "")
+    good_format_address = bad_format_address.split(",").map(&:strip)
+    full_address.push(good_format_address)
+  end
+  full_address.flatten!
+
+  # Write Name, rating, and address
+  hostel_info_fp.write("HotelHotel Hostel\n\n")
+  hostel_info_fp.write("\n#{full_address}\n")
+  hostel_info_fp.write("\nHostelworld rating: #{rating}\n")
+  hostel_info_fp.write("\nNumber of Reviews: #{num_reviews}\n")
+  hostel_info_fp.write("\n#{individual_ratings_categories}\n")
+  hostel_info_fp.write("\n#{individual_ratings}\n")
+
+
+  # Get the description
+  description_XML = agent.page.search(".bigtext")
+  description = description_XML.map(&:text).map(&:strip)[0]
+  description = description.gsub(/(\s[,])/, ",").gsub(/(\s[.])/, ".").gsub(/(\s[!])/, "!").gsub(/(\s[?])/, "?")
+  description = description.gsub(/([,.!?][abd-zA-Z])/, " ")
+
+  # Get the extra notes
+  additional_notes_XML = agent.page.search(".cancellationpolicy")
+  additional_notes = additional_notes_XML.map(&:text).map(&:strip)[0]
+  additional_notes = additional_notes.gsub(/(\s[,])/, ",").gsub(/(\s[.])/, ".").gsub(/(\s[!])/, "!").gsub(/(\s[?])/, "?")
+  additional_notes = additional_notes.gsub(/([,.!?][abd-zA-Z])/, " ")
+
+
+  # Write description and additional info
+  hostel_info_fp.write("\nDescription: \n#{description}\n")
+  hostel_info_fp.write("\nAddtional info:\n#{additional_notes}\n")
+
+
+  # Write Amenities
+  hostel_info_fp.write("Amenities:\n")
+  hostel_amenities.each do |amenity|
+    hostel_info_fp.write(amenity + ", ")
+  end
 
   form = agent.page.form_with(:action => "http://www.hostelworld.com/hosteldetails.php/HotelHotel-Hostel/Seattle/53155#availability")
   form.date_from = "14 May 2014"
   form.date_to = "15 May 2014"
   form.submit
-
-  hostel_info_fp.write("HotelHotel Hostel\n\n")
-  # Write Amenities
-  hostel_amenities.each do |amenity|
-    hostel_info_fp.write(amenity + ", ")
-  end
 
   # Room types
   hostel_room_types_XML = agent.page.search(".roomtype td").map(&:children)
@@ -108,7 +165,7 @@ agent.page.link_with(:text => "HotelHotel Hostel").click
   end
 
   # If the room has a price show them, if not just print the rooms
-  hostel_info_fp.write("\nRooms and Prices\n\n")
+  hostel_info_fp.write("\n\nRooms and Prices:\n")
   if room_types.length == room_prices.length
     room_info = Hash[room_types.zip room_prices]
     room_info.each do |type, price|

@@ -1,4 +1,4 @@
-# ruby hostelworld_scraper.rb
+# ruby hostelworld_countries.rb
 require "pry"
 require "nokogiri"
 require "mechanize"

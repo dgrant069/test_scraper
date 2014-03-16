@@ -5,6 +5,7 @@ require "mechanize"
 agent = Mechanize.new { |agent| agent.user_agent_alias = "Mac Safari" }
 
 countries_file = eval(File.read("hostelworld_countries.txt"))
+binding.pry
 states_file = eval(File.read("hostelworld_states.txt"))
 cities_csv = File.new("hostelworld_cities.csv", "w")
 cities_json = File.new("hostelworld_cities.txt", "w")
@@ -12,6 +13,7 @@ cities_json = File.new("hostelworld_cities.txt", "w")
 # Need to turn this into a city approach where if the country in the state file is null,
 # it uses the country file to get the cities. Or write two seperate files and join later
 # in Access
+
 countries_file.each do |country, url|
   country = country
   agent.get(url)

@@ -8,6 +8,10 @@ countries_file = eval(File.read("hostelworld_countries.txt"))
 states_csv = File.new("hostelworld_states.csv", "w")
 states_json = File.new("hostelworld_states.txt", "w")
 
+# country = []
+# states = {}
+state_by_country = {}
+
 countries_file.each do |country, url|
   country = country
   agent.get(url)
@@ -18,7 +22,7 @@ countries_file.each do |country, url|
   states_full = Hash[country => states]
 
   if (states_full[country] == {})
-  else states_json.write(states_full)
+  else state_by_country[country] = states
   end
 
   states_full.each do |country, state|
@@ -27,3 +31,5 @@ countries_file.each do |country, url|
     end
   end
 end
+
+states_json.write(state_by_country)

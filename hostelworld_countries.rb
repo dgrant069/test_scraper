@@ -18,36 +18,6 @@ countries.each do |country, url|
   countries_csv.write(country + "," + url + "\n")
 end
 
-
-
-# # CITIES
-# cities_fp = File.new("hostelworld_cities.csv", "w")
-# agent.page.link_with(:text => "Washington").click
-#   cities_XML = agent.page.search("#bottomlist a")
-#   cities_name = cities_XML.map(&:text).map(&:strip)
-#   cities_urls = cities_XML.map{ |a| a['href'] }.compact.uniq
-#   cities = Hash[cities_name.zip cities_urls]
-
-#   cities_fp.write("\nCities\n\n")
-#   cities.each do |city, url|
-#     cities_fp.write(city + ", " + url + "\n")
-#   end
-
-
-# # HOSTELS LIST
-# hostels_fp = File.new("hostelworld_hostels.csv", "w")
-# agent.page.link_with(:text => "Seattle").click
-#   hostels_XML = agent.page.search("h2 .gotoMicrosite")
-#   hostels_name = hostels_XML.map(&:text).map(&:strip)
-#   hostels_urls = hostels_XML.map{ |a| a['href'] }.compact.uniq
-#   hostels = Hash[hostels_name.zip hostels_urls]
-
-#   hostels_fp.write("\nHostels\n\n")
-#   hostels.each do |hostel, url|
-#     hostels_fp.write(hostel + ", " + url + "\n")
-#   end
-
-
 # # INDIVIDUAL HOSTEL INFO
 # hostel_info_fp = File.new("hostel_info.csv", "w")
 # hostel_info_json = File.new("hostel_info.txt", "w")

@@ -4,29 +4,60 @@ require "mechanize"
 
 agent = Mechanize.new { |agent| agent.user_agent_alias = "Mac Safari" }
 
-countries_file = eval(File.read("hostelworld_countries.txt"))
-binding.pry
-states_file = eval(File.read("hostelworld_states.txt"))
+countries_file = {"Canada" => "http://www.hostelworld.com/hostels/Canada","Australia" => "http://www.hostelworld.com/hostels/Australia","Albania" => "http://www.hostelworld.com/hostels/Albania"}#eval(File.read("hostelworld_countries.txt"))
+states_file = {"Canada"=>{"Alberta"=>"http://www.hostelworld.com/hostels/area/Alberta/Canada", "British Columbia"=>"http://www.hostelworld.com/hostels/area/British-Columbia/Canada"}, "Australia"=>{"Australian Capital Territory"=>"http://www.hostelworld.com/hostels/area/Australian-Capital-Territory/Australia", "New South Wales"=>"http://www.hostelworld.com/hostels/area/New-South-Wales/Australia", "Northern Territory"=>"http://www.hostelworld.com/hostels/area/Northern-Territory/Australia"}}#eval(File.read("hostelworld_states.txt"))
 cities_csv = File.new("hostelworld_cities.csv", "w")
 cities_json = File.new("hostelworld_cities.txt", "w")
 
-# Need to turn this into a city approach where if the country in the state file is null,
-# it uses the country file to get the cities. Or write two seperate files and join later
-# in Access
+cities_all = {}
 
+# Needs to fix up
 countries_file.each do |country, url|
   country = country
+  filler = ""
   agent.get(url)
-  states_XML = agent.page.search("#states a")
-  states_name = states_XML.map(&:text).map(&:strip)
-  states_urls = states_XML.map{ |a| a['href'] }.compact.uniq
-  states = Hash[states_name.zip states_urls]
-  states_full = Hash[country => states]
-  states_json.write(states_full)
+  cities_XML = agent.page.search("#bottomlist a")
+  cities_name = cities_XML.map(&:text).map(&:strip)
+  cities_urls = cities_XML.map{ |a| a['href'] }.compact.uniq
+  cities = Hash[cities_name.zip cities_urls]
+  cities_by_state = Hash[filler => cities]
+  cities_by_country = Hash[country => cities_by_state]
 
-  states_full.each do |country, state|
-    state.each do |state, url|
-      states_csv.write(country + "," + state + "," + url + "\n")
+  cities_all[country] = cities_by_state
+
+  cities_by_country.each do |country, states|
+    states.each do |state, cities|
+      cities.each do |city, url|
+        cities_csv.write(country + "," + ",," + city + "," + url + "\n")
+      end
     end
   end
 end
+
+states_file.each do |country, states|
+  cities_by_state = {}
+  states.each do |state, url|
+    country = country
+    state = state
+    agent.get(url)
+    cities_XML = agent.page.search("#bottomlist a")
+    cities_name = cities_XML.map(&:text).map(&:strip)
+    cities_urls = cities_XML.map{ |a| a['href'] }.compact.uniq
+    cities = Hash[cities_name.zip cities_urls]
+    cities_by_state = Hash[state => cities]
+  end
+
+  cities_by_country = Hash[country => cities_by_state]
+
+  cities_all[country] = cities_by_state
+
+  cities_by_country.each do |country, states|
+    states.each do |state, cities|
+      cities.each do |city, url|
+        cities_csv.write(country + "," + state + "," + city + "," + url + "\n")
+      end
+    end
+  end
+end
+
+cities_json.write(cities_all)

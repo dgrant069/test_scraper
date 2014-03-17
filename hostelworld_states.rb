@@ -8,12 +8,9 @@ countries_file = eval(File.read("hostelworld_countries.txt"))
 states_csv = File.new("hostelworld_states.csv", "w")
 states_json = File.new("hostelworld_states.txt", "w")
 
-# country = []
-# states = {}
 state_by_country = {}
 
 countries_file.each do |country, url|
-  country = country
   agent.get(url)
   states_XML = agent.page.search("#states a")
   states_name = states_XML.map(&:text).map(&:strip)

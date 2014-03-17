@@ -4,15 +4,14 @@ require "mechanize"
 
 agent = Mechanize.new { |agent| agent.user_agent_alias = "Mac Safari" }
 
-countries_file = {"Albania"=>"http://www.hostelworld.com/hostels/Albania", "Gibraltar"=>"http://www.hostelworld.com/hostels/Gibraltar"}#eval(File.read("hostelworld_countries.txt"))
-states_file = {"Canada"=>{"Alberta"=>"http://www.hostelworld.com/hostels/area/Alberta/Canada", "British Columbia"=>"http://www.hostelworld.com/hostels/area/British-Columbia/Canada"}, "Australia"=>{"Australian Capital Territory"=>"http://www.hostelworld.com/hostels/area/Australian-Capital-Territory/Australia", "New South Wales"=>"http://www.hostelworld.com/hostels/area/New-South-Wales/Australia", "Northern Territory"=>"http://www.hostelworld.com/hostels/area/Northern-Territory/Australia"}}#eval(File.read("hostelworld_states.txt"))
+countries_file = eval(File.read("hostelworld_countries.txt"))
+states_file = eval(File.read("hostelworld_states.txt"))
 cities_csv = File.new("hostelworld_cities.csv", "w")
 cities_json = File.new("hostelworld_cities.txt", "w")
 
 cities_all = {}
 
 countries_file.each do |country, url|
-  # filler = ""
   agent.get(url)
   cities_XML = agent.page.search("#bottomlist a")
   cities_name = cities_XML.map(&:text).map(&:strip)

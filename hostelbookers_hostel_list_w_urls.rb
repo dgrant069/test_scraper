@@ -5,10 +5,10 @@ require "mechanize"
 agent = Mechanize.new { |agent| agent.user_agent_alias = "Mac Safari" }
 
 # cities_file = {"Albania"=>{""=>{"Berat"=>"http://www.hostelworld.com/findabed.php/ChosenCity.Berat/ChosenCountry.Albania", "Himare"=>"http://www.hostelworld.com/findabed.php/ChosenCity.Himare/ChosenCountry.Albania"}}, "Australia"=>{"Western Australia"=>{"Albany"=>"http://www.hostelworld.com/findabed.php/ChosenCity.Albany/ChosenCountry.Australia", "Bunbury"=>"http://www.hostelworld.com/findabed.php/ChosenCity.Bunbury/ChosenCountry.Australia"}, "Northern Territory"=>{"Alice Springs"=>"http://www.hostelworld.com/findabed.php/ChosenCity.Alice-Springs/ChosenCountry.Australia", "Darwin"=>"http://www.hostelworld.com/findabed.php/ChosenCity.Darwin/ChosenCountry.Australia", "Tennant Creek"=>"http://www.hostelworld.com/findabed.php/ChosenCity.Tennant-Creek/ChosenCountry.Australia"}}}
-cities_file = eval(File.read("hostelworld_cities.txt"))
-hostel_list_csv = File.new("hostelworld_hostel_list.csv", "w")
-hostel_list_json = File.new("hostelworld_hostel_list.txt", "w")
-every_hostel_url = File.new("hostelworld_every_hostels_url.txt", "w")
+cities_file = eval(File.read("hostelbookers_cities.txt"))
+hostel_list_csv = File.new("hostelbookers_hostel_list.csv", "w")
+hostel_list_json = File.new("hostelbookers_hostel_list.txt", "w")
+every_hostel_url = File.new("hostelbookers_every_hostels_url.txt", "w")
 
 hostel_list_complete = {}
 hostels_url = {}

@@ -6,11 +6,11 @@ agent = Mechanize.new { |agent| agent.user_agent_alias = "Mac Safari" }
 
 # every_hostel_url = {"HotelHotel-Hostel"=>"http://www.hostelworld.com/hosteldetails.php/HotelHotel-Hostel/Seattle/53155","Berat Backpackers Hostel"=>"http://www.hostelworld.com/hosteldetails.php/Berat-Backpackers-Hostel/Berat/30936", "Nasho Vruho Hotel and Guesthouse"=>"http://www.hostelworld.com/hosteldetails.php/Nasho-Vruho-Hotel-and-Guesthouse/Berat/61560", "Guesthouse Kris"=>"http://www.hostelworld.com/hosteldetails.php/Guesthouse-Kris/Berat/52067"}
 every_hostel_url = eval(File.read("every_hostels_url.txt"))
-hostel_info_fp = File.new("hostelworld_hostel_info.csv", "w")
-hostel_table_rooms = File.new("hostelworld_hostel_table_rooms.csv", "w")
-hostel_table_ratings = File.new("hostelworld_hostel_table_ratings.csv", "w")
-hostel_table_amenities = File.new("hostelworld_hostel_table_amenities.csv", "w")
-hostel_info_json = File.new("hostelworld_hostel_info.txt", "w")
+hostel_info_fp = File.new("hostelbookers_hostel_info.csv", "w")
+hostel_table_rooms = File.new("hostelbookers_hostel_table_rooms.csv", "w")
+hostel_table_ratings = File.new("hostelbookers_hostel_table_ratings.csv", "w")
+hostel_table_amenities = File.new("hostelbookers_hostel_table_amenities.csv", "w")
+hostel_info_json = File.new("hostelbookers_hostel_info.txt", "w")
 
 hostel_info_complete = {}
 

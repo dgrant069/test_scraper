@@ -1,16 +1,21 @@
 require "pry"
 require "nokogiri"
 require "mechanize"
+require "logger"
 
 agent = Mechanize.new { |agent| agent.user_agent_alias = "Mac Safari" }
 
 # every_hostel_url = {"HotelHotel-Hostel"=>"http://www.hostelworld.com/hosteldetails.php/HotelHotel-Hostel/Seattle/53155","Berat Backpackers Hostel"=>"http://www.hostelworld.com/hosteldetails.php/Berat-Backpackers-Hostel/Berat/30936", "Nasho Vruho Hotel and Guesthouse"=>"http://www.hostelworld.com/hosteldetails.php/Nasho-Vruho-Hotel-and-Guesthouse/Berat/61560", "Guesthouse Kris"=>"http://www.hostelworld.com/hosteldetails.php/Guesthouse-Kris/Berat/52067"}
-every_hostel_url = eval(File.read("every_hostels_url.txt"))
+every_hostel_url = eval(File.read("hostelworld_every_hostels_url.txt"))
 hostel_info_fp = File.new("hostelworld_hostel_info.csv", "w")
 hostel_table_rooms = File.new("hostelworld_hostel_table_rooms.csv", "w")
 hostel_table_ratings = File.new("hostelworld_hostel_table_ratings.csv", "w")
 hostel_table_amenities = File.new("hostelworld_hostel_table_amenities.csv", "w")
 hostel_info_json = File.new("hostelworld_hostel_info.txt", "w")
+agent.keep_alive = false
+agent.idle_timeout = 0
+agent.log = Logger.new $stderr
+agent.agent.http.debug_output = $stderr
 
 hostel_info_complete = {}
 
@@ -28,11 +33,12 @@ every_hostel_url.each do |hostel, url|
   additional_notes = ""
 
   agent.get(url)
-
+  sleep(1)
   hostel_address_XML = agent.page.search(".address")
   hostel_address = hostel_address_XML.map(&:text).map(&:strip)
   hostel_address.each do |address|
     bad_format_address = address.to_s
+    bad_format_address.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '')
     bad_format_address.gsub!(/(?<=^|\[)\s+|\s+(?=$|\])|(?<=\s)\s+/, "")
     good_format_address = bad_format_address.split(",").map(&:strip)
     full_address.push(good_format_address)
@@ -69,26 +75,33 @@ every_hostel_url.each do |hostel, url|
   form.date_to = "17 Jun 2014" # May hit holidays sometimes. Will know if rooms come back nil or $$$$
   form.submit
 
+  sleep(1)
   # Room types
   hostel_room_types_XML = agent.page.search(".roomtype td").map(&:children)
+  if hostel_room_types_XML != nil
   hostel_room_types_XML.map!(&:children)
-  hostel_room_types_XML.each do |room|
-    room_type = room[0].to_s
-    room_type.gsub!(/(?<=^|\[)\s+|\s+(?=$|\])|(?<=\s)\s+/, "")
-    room_types.push(room_type)
+    hostel_room_types_XML.each do |room|
+      room_type = room[0].to_s
+      room_type.gsub!(/(?<=^|\[)\s+|\s+(?=$|\])|(?<=\s)\s+/, "")
+      room_types.push(room_type)
+    end
   end
 
   # Prices
   room_prices_XML = agent.page.search(".availability td:nth-child(2) .currency").map(&:text).map(&:strip)
-  room_prices_XML.each do |price|
-    room_price = price.gsub("US$", "").to_f
-    room_prices.push(room_price)
+  if room_prices_XML != nil
+    room_prices_XML.each do |price|
+      room_price = price.gsub("US$", "").to_f
+      room_prices.push(room_price)
+    end
   end
 
   room_and_price = Hash[room_types.zip room_prices]
 
   # Get the rating
-  agent.page.link_with(:text => "Reviews").click
+  if agent.page.link_with(:text => "Reviews") != nil
+    agent.page.link_with(:text => "Reviews").click
+    sleep(1)
     rating_XML = agent.page.search("h3")
     rating = rating_XML.map(&:text).map(&:strip)[0].to_i
 
@@ -106,7 +119,7 @@ every_hostel_url.each do |hostel, url|
 
     last_review_XML = agent.page.search(".reviewrating")
     last_review = last_review_XML.map(&:text).map(&:strip)[0]
-
+  end
 
   # JSON hostel info
   each_hostel_all_info["url"] = url
@@ -140,16 +153,22 @@ every_hostel_url.each do |hostel, url|
 
   hostel_info_fp.write(hostel + ";" + url + ";" + "#{full_address}" + ";" + "#{rating}" + ";" + "#{num_reviews}" + ";" + "#{last_review}" + ";" + "#{description}" + ";" + "#{additional_notes}" + ";" + "#{hostel_amenities}" + "\n")
 
-  room_and_price.each do |room, price|
-    hostel_table_rooms.write(hostel + "," + url + "," + room +  "," + "#{price}" + "\n")
+  if room_and_price != nil
+    room_and_price.each do |room, price|
+      hostel_table_rooms.write(hostel + "," + url + "," + room +  "," + "#{price}" + "\n")
+    end
   end
 
-  rating_by_category.each do |type, rating|
-    hostel_table_ratings.write(hostel + "," + url + "," + type +  "," + "#{rating}" + "\n")
+  if rating_by_category != nil
+    rating_by_category.each do |type, rating|
+      hostel_table_ratings.write(hostel + "," + url + "," + type +  "," + "#{rating}" + "\n")
+    end
   end
 
-  hostel_amenities.each do |amenity|
-    hostel_table_amenities.write(amenity + "\n")
+  if hostel_amenities != nil
+    hostel_amenities.each do |amenity|
+      hostel_table_amenities.write(amenity + "\n")
+    end
   end
 end
 
